@@ -37,9 +37,12 @@ test("移动布局、自动保存、哈希路由刷新、实验候选与导出",
 });
 test("四项真实滑动训练、暂停重置与报告", async ({ page }) => {
   await setup(page);
+  await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-01-01T00:00:10Z"));
   for (const mode of ["flick", "micro", "track", "turn"]) {
     await page.goto(`#/train/${mode}`);
     await page.getByRole("button", { name: "开始训练", exact: true }).click();
+    await page.clock.runFor(100);
     const canvas = page.getByLabel("滑动瞄准训练区域");
     const box = (await canvas.boundingBox())!;
     await page.mouse.move(box.x + box.width * 0.3, box.y + box.height * 0.6);
@@ -50,6 +53,7 @@ test("四项真实滑动训练、暂停重置与报告", async ({ page }) => {
         box.y + box.height * 0.6,
       );
     await page.mouse.up();
+    await page.clock.runFor(100);
     await page.getByRole("button", { name: "暂停", exact: true }).click();
     await expect(page.getByText("已暂停。继续时")).toBeVisible();
     await page.getByRole("button", { name: "重新测试" }).click();
