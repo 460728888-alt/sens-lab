@@ -1,4 +1,6 @@
 import { Plus, Trash2, Check, SlidersHorizontal } from "lucide-react";
+import { ScreenshotImport } from "./ScreenshotImport";
+import { mergeReviewedParameters } from "../lib/screenshot-parser";
 import { uid, type LabData, type Config } from "../types";
 export function Settings({
   data,
@@ -140,6 +142,15 @@ export function Settings({
               复制配置
             </button>
           </div>
+          <ScreenshotImport
+            key={config.id}
+            parameters={config.parameters}
+            onApply={(fields) =>
+              edit({
+                parameters: mergeReviewedParameters(config.parameters, fields),
+              })
+            }
+          />
           <section className="panel">
             <label>
               配置名称

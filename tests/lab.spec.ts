@@ -37,6 +37,7 @@ test("移动布局、自动保存、哈希路由刷新、实验候选与导出",
 });
 test("四项真实滑动训练、暂停重置与报告", async ({ page }) => {
   await setup(page);
+  // Keep interaction checks independent of CI scheduling; stall handling is tested separately.
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
   await page.clock.pauseAt(new Date("2026-01-01T00:00:10Z"));
   for (const mode of ["flick", "micro", "track", "turn"]) {
@@ -175,4 +176,23 @@ test("系统触控取消自动暂停", async ({ page }) => {
   });
   await page.mouse.up();
   await expect(page.getByText("触控被系统取消，已暂停。")).toBeVisible();
+});
+
+test("长帧中断自动暂停并允许恢复操作", async ({ page }) => {
+  await setup(page);
+  await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-01-01T00:00:10Z"));
+  await page.goto("#/train/flick");
+  await page.getByRole("button", { name: "开始训练", exact: true }).click();
+  await page.clock.runFor(100);
+  await page.clock.fastForward(1000);
+  await expect(
+    page.getByText("检测到页面卡顿或中断，已暂停。建议重测以保证可比性。"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "继续训练", exact: true }).click();
+  await page.clock.runFor(100);
+  await page.getByRole("button", { name: "暂停", exact: true }).click();
+  await expect(
+    page.getByText("已暂停。继续时从当前有效训练时间开始。"),
+  ).toBeVisible();
 });

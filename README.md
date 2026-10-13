@@ -1,8 +1,8 @@
-# SENS LAB V1.0
+# SENS LAB V1.1
 
 无畏契约手游智能灵敏度实验室。独立、免费的浏览器本地工具，不读取或修改游戏进程，无后端、无收费 API，不使用官方美术资源。
 
-目标地址：**https://460728888-alt.github.io/sens-lab/**。这只是预期部署地址，是否已上线请以仓库 Actions 和 Pages 的实际状态为准。
+目标地址：**https://460728888-alt.github.io/sens-lab/**。当前源码包含 V1.1 截图导入功能；网站是否已更新到该版本，以对应提交的 Actions 和 Pages 部署结果为准。
 
 ## 本地运行
 
@@ -27,7 +27,7 @@ npm run preview
 ## 使用流程
 
 1. 点击「开始检测」，填写设备型号、操作指法、陀螺仪状态和可选屏幕尺寸。
-2. 在「灵敏度设置」按游戏真实名称填写参数；字段名称、数值或文本均可编辑。网页增益是另一项独立的模拟参数。
+2. 在「灵敏度设置」上传游戏设置截图，核对识别值后点击「确认填入」；也可按游戏真实名称手动填写。字段名称、数值或文本均可编辑。网页增益是另一项独立的模拟参数。
 3. 选择甩枪、微调、跟枪、转向训练，点击开始后在画布内**滑动**。点击目标不会移动准星。画布短边的 1% 为一个模拟单位，滑动改变视角，准星保持中央。
 4. 每轮 24 秒。完成后自动展示报告，原始触控事件、30 Hz 误差轨迹、指标及参数快照自动保存。
 5. 在「录像分析」选择本地视频、暂停、定位，分别点击准星与目标中心，再记录关键帧；选择区间和配置，填写同条件任务标识并保存。
@@ -35,16 +35,58 @@ npm run preview
 
 首次使用无任何伪造测试结果。首页轨迹图明确标为示意，不计入分析。网页训练可以用鼠标调试，但鼠标和触屏记录不会混合比较。
 
+## V1.1：上传灵敏度截图
+
+在游戏中分别截取「滑屏设置」和「陀螺仪设置」完整横屏画面，打开网站的「灵敏度设置 → 截图自动填写」。一次最多选择两张 PNG、JPG 或 WebP 图片，每张不超过 12 MB、2400 万像素。暂不支持 HEIC、SVG 和视频文件。
+
+识别完成后，对照原图核对每项数值；可修改识别值、取消勾选，再点击「确认填入」。同名参数会更新现有值，其他参数保留。识别不确定的字段需要手动勾选；无法可靠读取的字段保持空缺。页面类型不明确时，可以手动选择「滑屏设置」或「陀螺仪设置」。识别失败时仍可手动填写，也可取消后重新选择截图。
+
+目前只提取以下四种数值，不推测截图未显示的设置或游戏数值范围：
+
+| 页面 | 可读取的设置 | 保存的参数名称 |
+| --- | --- | --- |
+| 滑屏设置 | 灵敏度一键调节 | 滑屏－灵敏度一键调节（%） |
+| 滑屏设置 | 垂直灵敏度（Y 轴灵敏度） | 滑屏－垂直灵敏度（%） |
+| 陀螺仪设置 | 灵敏度一键调节 | 陀螺仪－灵敏度一键调节（%） |
+| 陀螺仪设置 | 垂直灵敏度（Y 轴灵敏度） | 陀螺仪－垂直灵敏度（%） |
+
+识别必须同时找到设置标签和同排明确的百分比数值。两个顶部页签会同时显示，因此只凭页签文字不能判断当前页面；正文标题用于区分滑屏和陀螺仪。数值冲突、缺少百分号、字符含糊时不会猜测补全。不自动判断陀螺仪是否开启、轴反向、固定速度、转向辅助或开火复用等选中状态，也不改变设备资料和网页模拟增益。
+
+截图 OCR 使用浏览器中的 Tesseract.js 和 `chi_sim+eng` 模型。首次使用从网站同一站点下载约 9 MB 的模型及识别核心资源；截图内容不会发给服务器。最多两张截图按顺序处理，预处理图片限制分辨率，识别在 Worker 中运行；超时、取消或离开页面会释放相关资源。原图只用于当前页面预览，不写入 IndexedDB 或导出的 JSON；只有用户确认的参数写入当前配置。
+
+**自动填表不等于自动评估灵敏度。** OCR 只帮助记录截图上的参数，不能证明当前数值适合玩家；是否值得调整仍取决于同条件训练、录像和单参数 A/B 实验。模糊、压缩、裁剪、游戏界面改版或字体差异可能导致识别失败或误读，必须核对结果。OCR 的文字置信度也不是灵敏度匹配度。
+
 ## 已实现
 
 - React + TypeScript + Vite + Tailwind CSS，中文响应式界面，Hash 路由适配静态托管刷新。
 - IndexedDB 自动保存设备、灵敏度配置、原始轨迹、录像标注和报告历史。配置修改不改变既有记录快照。
+- 本地截图 OCR 导入四类已明确的游戏数值，支持双图顺序识别、原图核对、改值、取消与确认合并；保留手动填表。
 - Canvas 2D + Pointer Events 四项滑动训练，开始、暂停、继续、重测；处理 pointercancel、丢失捕获、失焦、后台切换、尺寸变化、长帧中断。
 - 手动录像标注、近似时间步进、区间选择、关键帧误差曲线、保存记录和多录像对比。
 - 真实重复测试的 A/B 比较、保守区间、样本与可比性筛选、辅助指标保护条件。
 - JSON 导出、单轮删除、报告快照与历史。原始数据可离线检查；没有账户和服务器同步。
 - GitHub Pages Actions，PR 检查，单元测试和 Chromium/WebKit Playwright 测试。
-- 自动视觉接口预留，**不提供也不宣称已经实现自动目标识别**。
+- 录像自动视觉接口预留，**截图文字 OCR 不代表已实现游戏目标自动识别或追踪**。
+
+## iPad 更新已有网站
+
+网站已部署的情况下，无需重新设置 Pages：
+
+1. 下载完整更新包 `sens-lab-v1.1.zip`，在已有 GitHub Codespace 的左侧资源管理器上传到仓库根目录。
+2. 在 Codespace 下方「终端」粘贴执行：
+
+```bash
+cd /workspaces/sens-lab &&
+python3 -m zipfile -e sens-lab-v1.1.zip /tmp/sens-lab-v11 &&
+cp -a /tmp/sens-lab-v11/sens-lab/. . &&
+git add . &&
+git commit -m "feat: add local screenshot import" &&
+git push origin main
+```
+
+3. 回到仓库的 Actions，等待这次更新的检查和部署成功，再刷新网站。「灵敏度设置」会出现「截图自动填写」。
+
+更新源码不会删除浏览器内的设备和历史数据；请使用原浏览器打开同一个网站。
 
 ## 指标定义
 
@@ -92,6 +134,8 @@ npm run preview
 
 不支持 Pointer Events 时禁止启动触控测试，录像和资料功能仍可用。不支持 Canvas 2D 时显示错误。无全屏 API 依赖，无自动音频播放，无摄像头权限请求。当前未实现离线 Service Worker；首次加载资源需要网络，本地视频处理本身无需网络。
 
+截图识别还要求 Worker、WebAssembly 和 Canvas 2D。资源加载或浏览器能力不足时显示中文错误并保留手动填写方式。模型和核心由 `scripts/prepare-ocr.mjs` 从已安装依赖复制到 `public/ocr/`，随 `dist` 发布；生产识别不依赖第三方 CDN 或收费 API。`npm run dev` 和 `npm run build` 会自动准备这些资源；不需要把生成的 `public/ocr/` 手工提交到仓库。
+
 ## 测试
 
 实际验证结果与环境限制见 [VALIDATION.md](VALIDATION.md)。
@@ -99,14 +143,19 @@ npm run preview
 ```bash
 npm test
 npx playwright install --with-deps chromium webkit
+npm run build
 npm run test:e2e
 ```
 
-Vitest 验证真实轨迹计算、未命中、增益、重复样本筛选、推荐拒绝条件及录像采样规则。Playwright 验证响应式页面、资料持久化、路由刷新、四项滑动与暂停重测、完整一轮报告、录像失败提示、候选与导出。浏览器模拟不替代真实 iPhone/Android 手指手感验收，尤其是触摸延迟、编码兼容和系统手势。
+Playwright 使用 `vite preview` 检查生产构建，必须先运行 `npm run build`；修改代码后也要先重新构建再执行 E2E，避免测试旧的 `dist`。
+
+Vitest 验证真实轨迹计算、未命中、增益、重复样本筛选、推荐拒绝条件及录像采样规则，也覆盖截图正文识别、同排文字框组合、百分比解析、冲突拒绝与参数合并。Playwright 覆盖响应式页面、资料持久化、路由刷新、四项滑动与暂停重测、完整一轮报告、录像失败提示、候选与导出，并增加真实浏览器 OCR 引擎的双图导入、取消和失败处理场景。
+
+`tests/fixtures/settings-touch.png` 与 `settings-gyro.png` 是为测试自制的合成设置画面，不是真实游戏截图或玩家数据，也不证明对所有游戏界面具有相同识别效果。自动测试的通过情况与尚存限制见 `VALIDATION.md`。浏览器模拟不替代真实 iPhone/Android 手指手感验收，尤其是触摸延迟、编码兼容和系统手势。
 
 ## 自动视觉扩展（第四阶段）
 
-`src/lib/vision.ts` 提供 `VisionAdapter`、`VisionFrame`、`VisionDetection` 和 `VisionRegistry`。未来可实现 OpenCV.js 或 ONNX Runtime Web 适配器，支持初始化、逐帧检测、AbortSignal 取消与资源释放。V1 不下载模型、不返回伪检测结果。新增模型必须对人工标注验证，限制逐帧分辨率与内存，并把模型置信度与灵敏度实验结论分开。
+`src/lib/vision.ts` 提供 `VisionAdapter`、`VisionFrame`、`VisionDetection` 和 `VisionRegistry`。未来可实现 OpenCV.js 或 ONNX Runtime Web 适配器，支持初始化、逐帧检测、AbortSignal 取消与资源释放。录像功能目前不下载目标检测模型、不返回伪检测结果；V1.1 的截图文字模型独立于这套录像接口。新增目标模型必须对人工标注验证，限制逐帧分辨率与内存，并把模型置信度与灵敏度实验结论分开。
 
 ## GitHub Pages 部署
 
@@ -131,7 +180,7 @@ npm ci
 npm test
 npm run build
 git add .
-git commit -m "feat: implement SENS LAB V1.0"
+git commit -m "feat: add local sensitivity screenshot import"
 git push origin main
 ```
 
@@ -152,13 +201,17 @@ sens-lab/
 ├── vite.config.ts
 ├── README.md
 ├── VALIDATION.md
+├── scripts/prepare-ocr.mjs        # 从 npm 依赖准备同站点 OCR 静态资源
+├── public/ocr/                   # 开发/构建时生成，不提交源码仓库
 ├── src/
 │   ├── main.tsx
 │   ├── App.tsx                    # Hash 导航、首页、数据状态
 │   ├── styles.css                 # 原创暗色移动优先界面
 │   ├── types.ts                   # 全部领域类型
+│   ├── vite-env.d.ts
 │   ├── components/
 │   │   ├── Settings.tsx
+│   │   ├── ScreenshotImport.tsx   # 图片选择、识别预览和确认填入
 │   │   ├── Training.tsx
 │   │   ├── VideoAnalysis.tsx
 │   │   ├── Experiments.tsx
@@ -169,10 +222,18 @@ sens-lab/
 │       ├── engine.ts
 │       ├── metrics.ts
 │       ├── experiments.ts
+│       ├── screenshot-ocr.ts       # 图片预处理、Worker 与取消管理
+│       ├── screenshot.worker.ts    # 本地 Tesseract 识别
+│       ├── screenshot-parser.ts    # 参数提取与核对后合并
+│       ├── screenshot-parser.test.ts
 │       ├── vision.ts
 │       ├── metrics.test.ts
 │       └── experiments.test.ts
 └── tests/
     ├── lab.spec.ts
-    └── fixtures/training.mp4      # 自制合成测试短片，不是玩家数据
+    ├── screenshot.spec.ts
+    └── fixtures/
+        ├── training.mp4          # 自制合成测试短片，不是玩家数据
+        ├── settings-touch.png    # 自制合成设置画面，不是真实游戏截图
+        └── settings-gyro.png     # 自制合成设置画面，不是真实游戏截图
 ```

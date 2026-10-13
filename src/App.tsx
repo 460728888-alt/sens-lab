@@ -67,7 +67,7 @@ function Home({ data }: { data: LabData }) {
         <span>
           <i className="live-dot" /> 本地实验室已就绪
         </span>
-        <span>版本 1.0 / 免费开放</span>
+        <span>版本 1.1 / 免费开放</span>
       </div>
       <section className="hero">
         <div className="hero-copy">
@@ -234,17 +234,27 @@ export default function App() {
   const [path, setPath] = useState(location.hash.slice(1) || "/");
   const [menu, setMenu] = useState(false);
   useEffect(() => {
+    let active = true;
     loadData()
-      .then(setData)
-      .catch((e) => setStorage(String(e.message)))
-      .finally(() => setLoaded(true));
+      .then((value) => {
+        if (active) setData(value);
+      })
+      .catch((e) => {
+        if (active) setStorage(String(e.message));
+      })
+      .finally(() => {
+        if (active) setLoaded(true);
+      });
     const hash = () => {
       setPath(location.hash.slice(1) || "/");
       setMenu(false);
       window.scrollTo(0, 0);
     };
     window.addEventListener("hashchange", hash);
-    return () => window.removeEventListener("hashchange", hash);
+    return () => {
+      active = false;
+      window.removeEventListener("hashchange", hash);
+    };
   }, []);
   useEffect(() => {
     if (!loaded) return;
@@ -407,7 +417,7 @@ export default function App() {
             <span>
               <i className="live-dot" /> 系统就绪
             </span>
-            <span>V1.0</span>
+            <span>V1.1</span>
           </div>
         </div>
       </aside>
